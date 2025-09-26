@@ -11,6 +11,7 @@ from typing import Any, Callable
 import httpx
 
 from app.core.errors import ReviewAPIAuthError
+from app.services.stop_signal import StopSignal
 
 # GraphQL API 엔드포인트
 GRAPHQL_API_URL = "https://new.smartplace.naver.com/graphql?opName=getReviews"
@@ -159,8 +160,9 @@ class ReviewCrawler:
     Fetches SmartPlace reviews via the new GraphQL API.
     """
 
-    def __init__(self, client: httpx.Client):
+    def __init__(self, client: httpx.Client, stop_signal: StopSignal | None = None):
         self.client = client
+        self.stop_signal = stop_signal
 
     def fetch_reviews(
         self,
@@ -176,6 +178,11 @@ class ReviewCrawler:
         crawl_results: list[StoreCrawlResult] = []
 
         for i, store_map in enumerate(stores, 1):
+            # 중단 신호 체크
+            if self.stop_signal and self.stop_signal.is_set():
+                emit("INFO", "크롤링이 중단되었습니다.")
+                break
+
             booking_id = store_map["booking_id"]
             place_seq = store_map["place_seq"]
             place_id = store_map["place_id"]
@@ -194,16 +201,21 @@ class ReviewCrawler:
                     response_data.get("data", {}).get("reviews", {}).get("items", [])
                 )
 
+                # 서버에서 필터링했으므로 클라이언트 필터링은 불필요합니다.
+                review_count = len(reviews)
+
                 result = StoreCrawlResult(
                     booking_id=booking_id,
                     place_id=place_id,
                     place_seq=place_seq,
-                    review_count=len(reviews),
+                    review_count=review_count,
                     reviews=reviews,
                 )
                 crawl_results.append(result)
+
                 emit(
-                    "SUCCESS", f"플레이스 {booking_id} 리뷰 {len(reviews)}건 수집 완료"
+                    "SUCCESS",
+                    f"플레이스 {booking_id} 답글 없는 리뷰 {review_count}건 수집 완료",
                 )
 
             except (httpx.HTTPStatusError, ReviewAPIAuthError) as e:
@@ -251,11 +263,12 @@ class ReviewCrawler:
         start_date = today - datetime.timedelta(days=365 * 2)  # 2년 전
         variables = {
             "input": {
-                "size": 2,  # 한 번에 최대 10개 요청
+                "size": 5,  # 한 번에 최대 n개 요청
                 "startDate": start_date.strftime("%Y-%m-%d"),
                 "endDate": today.strftime("%Y-%m-%d"),
                 "isSuspended": False,
                 "placeId": place_id,
+                "hasReply": False,  # 답글 없는 리뷰만 가져오기
             }
         }
 

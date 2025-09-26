@@ -19,6 +19,7 @@ from app.core.errors import LoginError, StoreEnumerationError
 from app.services.login_service import LoginResult, NaverLoginService
 from app.services.reply_generator import ReplyConfig, ReplyGenerator
 from app.services.review_crawler import CrawlResult, ReviewCrawler
+from app.services.stop_signal import StopSignal
 from app.services.store_enumerator import StoreEnumerator
 from app.services.submitter import ReplySubmitter
 from app.utils.auth import get_openai_api_key
@@ -27,7 +28,13 @@ import httpx
 
 from .styles import Theme, ThemeManager
 from .viewmodel import ViewModel
-from .widgets import BusinessListWidget, ConfigWidget, ControlWidget, LoginWidget, ResultsWindow
+from .widgets import (
+    BusinessListWidget,
+    ConfigWidget,
+    ControlWidget,
+    LoginWidget,
+    ResultsWindow,
+)
 from .widgets.log_widget import LogWidget
 
 
@@ -73,9 +80,10 @@ class _OrchestrationWorker(QObject):
     reply_generation_started = pyqtSignal()
     reply_submission_started = pyqtSignal()
 
-    def __init__(self, config: CrawlConfig) -> None:
+    def __init__(self, config: CrawlConfig, stop_signal: StopSignal | None = None) -> None:
         super().__init__()
         self._config = config
+        self._stop_signal = stop_signal
         self._login_service = NaverLoginService(headless=not config.browser_visible)
 
     def run(self) -> None:
@@ -113,7 +121,7 @@ class _OrchestrationWorker(QObject):
                     raise ValueError("리뷰를 수집할 유효한 사업장이 없습니다.")
 
                 # 3. 리뷰 크롤링
-                crawler = ReviewCrawler(client)
+                crawler = ReviewCrawler(client, self._stop_signal)
                 crawl_result = crawler.fetch_reviews(
                     stores=store_mappings, log=self.log_emitted.emit
                 )
@@ -247,6 +255,7 @@ class MainWindow(QMainWindow):
         # 서비스 초기화
         self._login_thread = None
         self._login_worker = None
+        self._stop_signal = StopSignal()
 
         # 실행 관련 상태
         self._execution_thread = None
@@ -301,7 +310,6 @@ class MainWindow(QMainWindow):
 
         # 폰트 설정
         self.set_korean_font()
-
 
     def setup_menu(self):
         """메뉴바 설정"""
@@ -465,7 +473,12 @@ class MainWindow(QMainWindow):
         if not config:
             return
 
-        self.viewmodel.add_log("DEBUG", f"CrawlConfig.auto_submit_replies = {config.auto_submit_replies}")
+        self.viewmodel.add_log(
+            "DEBUG", f"CrawlConfig.auto_submit_replies = {config.auto_submit_replies}"
+        )
+
+        # 새 작업을 위한 정지 신호 초기화
+        self._stop_signal = StopSignal()
 
         self.viewmodel.clear_results()
         self.viewmodel.start_execution()
@@ -473,7 +486,7 @@ class MainWindow(QMainWindow):
         self.update_status("리뷰 수집을 시작합니다.")
 
         self._execution_thread = QThread()
-        self._execution_worker = _OrchestrationWorker(config)
+        self._execution_worker = _OrchestrationWorker(config, self._stop_signal)
         self._execution_worker.moveToThread(self._execution_thread)
 
         self._execution_thread.started.connect(self._execution_worker.run)
@@ -524,12 +537,14 @@ class MainWindow(QMainWindow):
     def on_stop_requested(self):
         """실행 정지 요청"""
         if self._execution_thread and self._execution_thread.isRunning():
+            # 정지 신호 설정
+            self._stop_signal.stop()
             self.viewmodel.add_log(
-                "WARNING",
-                "실행 중단이 요청되었습니다. 현재 작업은 빠르게 종료되지 않을 수 있습니다.",
+                "INFO",
+                "정지 신호를 전송했습니다. 현재 작업이 완료되는 대로 중단됩니다.",
             )
         self.viewmodel.stop_execution()
-        self.update_status("실행 정지됨")
+        self.update_status("실행 정지 요청됨")
 
     def on_generate_replies_requested(self):
         """답변만 생성 요청 (기존 크롤링 결과에 대해)"""

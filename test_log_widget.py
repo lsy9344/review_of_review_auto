@@ -16,11 +16,11 @@ from app.ui.main_window import MainWindow
 def test_log_widget():
     """로그 위젯 테스트"""
     app = QApplication(sys.argv)
-    
+
     # 메인 윈도우 생성
     window = MainWindow()
     window.show()
-    
+
     # 테스트 로그 추가
     def add_test_logs():
         viewmodel = window.viewmodel
@@ -31,10 +31,10 @@ def test_log_widget():
         viewmodel.add_log("INFO", "재시도 중... (1/3)")
         viewmodel.add_log("INFO", "재시도 중... (2/3)")
         viewmodel.add_log("SUCCESS", "연결 성공")
-        
+
     # 1초 후에 테스트 로그 추가
     QTimer.singleShot(1000, add_test_logs)
-    
+
     sys.exit(app.exec())
 
 

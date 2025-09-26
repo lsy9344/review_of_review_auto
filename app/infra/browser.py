@@ -25,7 +25,10 @@ class BrowserClient:
         self.browser = None
 
     def initialize(
-        self, headless: bool = False, slow_mo_ms: int = 0, browser_type: Optional[str] = None
+        self,
+        headless: bool = False,
+        slow_mo_ms: int = 0,
+        browser_type: Optional[str] = None,
     ) -> None:
         """Start Playwright and launch a browser.
 
@@ -44,7 +47,9 @@ class BrowserClient:
             launcher = getattr(self._playwright, resolved_browser)
         except AttributeError as exc:  # noqa: B902 - map to ValueError
             self._playwright.stop()
-            raise ValueError(f"지원하지 않는 Playwright 브라우저 타입: {resolved_browser}") from exc
+            raise ValueError(
+                f"지원하지 않는 Playwright 브라우저 타입: {resolved_browser}"
+            ) from exc
 
         self.browser = launcher.launch(headless=headless, slow_mo=slow_mo_ms)
 

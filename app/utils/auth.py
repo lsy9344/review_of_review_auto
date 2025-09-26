@@ -14,7 +14,7 @@ def load_openai_api_key() -> Optional[str]:
         return None
 
     try:
-        with open(auth_file, 'r', encoding='utf-8') as f:
+        with open(auth_file, "r", encoding="utf-8") as f:
             data = json.load(f)
             return data.get("api_key")
     except (json.JSONDecodeError, KeyError, FileNotFoundError):
@@ -30,7 +30,7 @@ def save_openai_api_key(api_key: str) -> bool:
 
     try:
         data = {"api_key": api_key}
-        with open(auth_file, 'w', encoding='utf-8') as f:
+        with open(auth_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
         return True
     except Exception:

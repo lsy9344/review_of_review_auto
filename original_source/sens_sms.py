@@ -2,37 +2,42 @@ import requests
 import hashlib
 import hmac
 import base64
-import requests
 import time
 import json
 
-class Sens_sms():
+
+class Sens_sms:
     def __init__(self) -> None:
         timestamp = int(time.time() * 1000)
         self.timestamp = str(timestamp)
 
-        self.access_key = "tpAFhfAWvpLqS5ve35Zw"				# access key id (from portal or Sub Account)
-        self.secret_key = "YrAgDCC20hiItoFrzrolbStsIwzyEWBFi4szm1Vh"				# secret key (from portal or Sub Account)
+        self.access_key = (
+            "tpAFhfAWvpLqS5ve35Zw"  # access key id (from portal or Sub Account)
+        )
+        self.secret_key = "YrAgDCC20hiItoFrzrolbStsIwzyEWBFi4szm1Vh"  # secret key (from portal or Sub Account)
 
         self.url = "https://sens.apigw.ntruss.com"
         self.uri = "/sms/v2/services/ncp:sms:kr:324182048243:dabistudio/messages"
 
         self.header = {
-        "Content-Type" : "application/json; charset=utf-8",
-        "x-ncp-apigw-timestamp" : self.timestamp,
-        "x-ncp-iam-access-key" : self.access_key,
-        "x-ncp-apigw-signature-v2" : self.make_signature()
-    }
+            "Content-Type": "application/json; charset=utf-8",
+            "x-ncp-apigw-timestamp": self.timestamp,
+            "x-ncp-iam-access-key": self.access_key,
+            "x-ncp-apigw-signature-v2": self.make_signature(),
+        }
 
-    def	make_signature(self):
-        secret_key_bytes = bytes(self.secret_key, 'UTF-8')
+    def make_signature(self):
+        secret_key_bytes = bytes(self.secret_key, "UTF-8")
         method = "POST"
-        message = method + " " + self.uri + "\n" + self.timestamp + "\n" + self.access_key
-        message = bytes(message, 'UTF-8')
-        signingKey = base64.b64encode(hmac.new(secret_key_bytes, message, digestmod=hashlib.sha256).digest())
+        message = (
+            method + " " + self.uri + "\n" + self.timestamp + "\n" + self.access_key
+        )
+        message = bytes(message, "UTF-8")
+        signingKey = base64.b64encode(
+            hmac.new(secret_key_bytes, message, digestmod=hashlib.sha256).digest()
+        )
         return signingKey
 
-    
     def send_confirm_sms(self, phone):
         phone_num = phone.strip().replace("-", "")
         print(f"전화 번호 : {phone_num}")
@@ -68,19 +73,21 @@ class Sens_sms():
 """
 
         data = {
-            "type":"LMS",
-            "contentType":"COMM",
-            "from":"01055814318",
-            "subject":"다비스튜디오 안내",
+            "type": "LMS",
+            "contentType": "COMM",
+            "from": "01055814318",
+            "subject": "다비스튜디오 안내",
             "content": booking_confirm_template,
-            "messages":[
+            "messages": [
                 {
                     "to": phone_num,
                 }
-            ]
+            ],
         }
 
-        res= requests.post(self.url+self.uri,headers=self.header,data=json.dumps(data))
+        res = requests.post(
+            self.url + self.uri, headers=self.header, data=json.dumps(data)
+        )
         print(res.text)
 
     def send_guide_sms(self, store_id, phone):
@@ -125,8 +132,8 @@ http://pf.kakao.com/_EwvUxj/104914467
 
 이용하시다가 문의사항 있다면 연락 부탁 드릴께요! :)
 """
-        
-        booking_guide_template_951291 ="""다비스튜디오를 찾아주신 고객님, 안녕하세요
+
+        booking_guide_template_951291 = """다비스튜디오를 찾아주신 고객님, 안녕하세요
 이용 상세 안내 드립니다.
 
 -도어락 비밀번호 : 5581*
@@ -191,7 +198,7 @@ http://pf.kakao.com/_EwvUxj/104666553
 
 이용하시다가 문의사항 있다면 연락 부탁 드릴께요!
         """
-        
+
         booking_guide_template_1120125 = """
         다비스튜디오를 찾아주신 고객님, 안녕하세요
 이용 상세 안내 드립니다.
@@ -406,17 +413,12 @@ http://pf.kakao.com/_EwvUxj/108482706
 
 이용하시다가 문의사항 있다면 연락 부탁 드릴께요!
         """
-        #문자양식템플릿.앞의 샵은 제거하고, 사업장번호칸에 적절한 번호를 수정한뒤, 문자 내용을 적으시면 됩니다. 
+        # 문자양식템플릿.앞의 샵은 제거하고, 사업장번호칸에 적절한 번호를 수정한뒤, 문자 내용을 적으시면 됩니다.
 
-
-        
-
-
-
-        #booking_guide_template_사업장번호 = """
-        #이 안에다가 내용 쓰기
-        #"""
-        #문자양식템플릿.앞의 샵은 제거하고, 사업장번호칸에 적절한 번호를 수정한뒤, 문자 내용을 적으시면 됩니다. 
+        # booking_guide_template_사업장번호 = """
+        # 이 안에다가 내용 쓰기
+        # """
+        # 문자양식템플릿.앞의 샵은 제거하고, 사업장번호칸에 적절한 번호를 수정한뒤, 문자 내용을 적으시면 됩니다.
 
         booking_guide_sms = None
         if store_id == "1051707":
@@ -425,38 +427,40 @@ http://pf.kakao.com/_EwvUxj/108482706
             booking_guide_sms = booking_guide_template_951291
         elif store_id == "1462519":
             booking_guide_sms = booking_guide_template_1462519
-        elif store_id == '1120125':
+        elif store_id == "1120125":
             booking_guide_sms = booking_guide_template_1120125
-        elif store_id == '1285716':
+        elif store_id == "1285716":
             booking_guide_sms = booking_guide_template_1285716
-        elif store_id == '1473826':
+        elif store_id == "1473826":
             booking_guide_sms = booking_guide_template_1473826
-        elif store_id == '1466783':
-            booking_guide_sms = booking_guide_template_1466783                    
-        #elif store_id == '사업장번호':
+        elif store_id == "1466783":
+            booking_guide_sms = booking_guide_template_1466783
+        # elif store_id == '사업장번호':
         #    booking_guide_sms = booking_guide_template_사업장번호
-        #사업장번호 검사코드입니다. 만약 사업장 문자 템플릿을 추가했을경우, 해당 사업자번호입력 후 앞의 #을 지우시면 됩니다.
-        
+        # 사업장번호 검사코드입니다. 만약 사업장 문자 템플릿을 추가했을경우, 해당 사업자번호입력 후 앞의 #을 지우시면 됩니다.
+
         data = {
-            "type":"LMS",
-            "contentType":"COMM",
-            "from":"01055814318",
-            "subject":"다비스튜디오 안내",
+            "type": "LMS",
+            "contentType": "COMM",
+            "from": "01055814318",
+            "subject": "다비스튜디오 안내",
             "content": booking_guide_sms,
-            "messages":[
+            "messages": [
                 {
                     "to": phone_num,
                 }
-            ]
+            ],
         }
-        
-        res= requests.post(self.url+self.uri,headers=self.header,data=json.dumps(data))
+
+        res = requests.post(
+            self.url + self.uri, headers=self.header, data=json.dumps(data)
+        )
         print(res.text)
 
     def send_event_sms(self, phone):
         phone_num = phone.strip().replace("-", "")
         print(f"전화 번호 : {phone_num}")
-        event_template="""고객님 안녕하세요
+        event_template = """고객님 안녕하세요
 고객님~ 안녕하세요, 다비스튜디오 예요 :)
 
 소중한 사람들과의 소중한 추억을 잘 남기셨는지 궁금하네요!
@@ -474,17 +478,19 @@ http://pf.kakao.com/_EwvUxj/108482706
         """
 
         data = {
-            "type":"LMS",
-            "contentType":"COMM",
-            "from":"01055814318",
-            "subject":"다비스튜디오 안내",
+            "type": "LMS",
+            "contentType": "COMM",
+            "from": "01055814318",
+            "subject": "다비스튜디오 안내",
             "content": event_template,
-            "messages":[
+            "messages": [
                 {
                     "to": phone_num,
                 }
-            ]
+            ],
         }
-        
-        res= requests.post(self.url+self.uri,headers=self.header,data=json.dumps(data))
+
+        res = requests.post(
+            self.url + self.uri, headers=self.header, data=json.dumps(data)
+        )
         print(res.text)

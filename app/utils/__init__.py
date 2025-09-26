@@ -4,4 +4,4 @@
 
 from .dev_watcher import DevWatcher
 
-__all__ = ['DevWatcher']
+__all__ = ["DevWatcher"]

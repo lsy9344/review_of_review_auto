@@ -5,4 +5,4 @@
 from .main_style import get_main_stylesheet
 from .theme import Theme, ThemeManager
 
-__all__ = ['get_main_stylesheet', 'Theme', 'ThemeManager']
+__all__ = ["get_main_stylesheet", "Theme", "ThemeManager"]

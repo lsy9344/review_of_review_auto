@@ -33,36 +33,25 @@ def main():
 
 파일 변경 감지 시 자동으로 프로그램이 재시작됩니다.
 중지하려면 Ctrl+C를 눌러주세요.
-        """
+        """,
     )
-    
+
     parser.add_argument(
-        '--watch', 
-        nargs='+',
-        default=['app'],
-        help='감시할 디렉토리 목록 (기본값: app)'
+        "--watch", nargs="+", default=["app"], help="감시할 디렉토리 목록 (기본값: app)"
     )
-    
+
     parser.add_argument(
-        '--command',
-        default=None,
-        help='실행할 명령어 (기본값: python run.py)'
+        "--command", default=None, help="실행할 명령어 (기본값: python run.py)"
     )
-    
+
     parser.add_argument(
-        '--no-ui',
-        action='store_true',
-        help='UI 없이 백엔드만 실행 (향후 구현)'
+        "--no-ui", action="store_true", help="UI 없이 백엔드만 실행 (향후 구현)"
     )
-    
-    parser.add_argument(
-        '--verbose',
-        action='store_true',
-        help='상세 로그 출력'
-    )
-    
+
+    parser.add_argument("--verbose", action="store_true", help="상세 로그 출력")
+
     args = parser.parse_args()
-    
+
     # 감시할 디렉토리 확인
     watch_dirs = []
     for watch_dir in args.watch:
@@ -70,33 +59,35 @@ def main():
             watch_dirs.append(watch_dir)
         else:
             print(f"⚠️  디렉토리가 존재하지 않습니다: {watch_dir}")
-    
+
     if not watch_dirs:
         print("❌ 감시할 디렉토리가 없습니다.")
         sys.exit(1)
-    
+
     # 실행 명령어 설정
     if args.command:
         restart_command = args.command.split()
     elif args.no_ui:
         # 향후 백엔드 전용 모드 구현 시 사용
-        restart_command = [sys.executable, '-c', 'print("백엔드 모드는 향후 구현 예정")']
+        restart_command = [
+            sys.executable,
+            "-c",
+            'print("백엔드 모드는 향후 구현 예정")',
+        ]
     else:
-        restart_command = [sys.executable, 'run.py']
-    
+        restart_command = [sys.executable, "run.py"]
+
     # 개발 모드 실행
     try:
-        watcher = DevWatcher(
-            watch_dirs=watch_dirs,
-            restart_command=restart_command
-        )
-        
+        watcher = DevWatcher(watch_dirs=watch_dirs, restart_command=restart_command)
+
         if args.verbose:
             import logging
+
             logging.getLogger().setLevel(logging.DEBUG)
-        
+
         watcher.run_dev_mode()
-        
+
     except KeyboardInterrupt:
         print("\n👋 개발 모드를 종료합니다.")
         sys.exit(0)

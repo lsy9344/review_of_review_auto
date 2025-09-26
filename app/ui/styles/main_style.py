@@ -2,6 +2,7 @@
 메인 스타일시트 - 전체 애플리케이션에 적용되는 스타일
 """
 
+
 def get_main_stylesheet() -> str:
     """메인 스타일시트 반환"""
     return """

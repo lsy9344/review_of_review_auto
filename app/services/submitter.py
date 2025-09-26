@@ -39,6 +39,7 @@ mutation createReply($input: CreateReviewReplyInput!) {
 @dataclass
 class SubmissionResult:
     """The result of submitting a single reply."""
+
     review_id: str
     success: bool
     error: str | None = None
@@ -60,14 +61,16 @@ class ReplySubmitter:
                     (i.e., contains the necessary login cookies).
         """
         self.client = client
-        self.graphql_endpoint = "https://new.smartplace.naver.com/graphql?opName=createReply"
+        self.graphql_endpoint = (
+            "https://new.smartplace.naver.com/graphql?opName=createReply"
+        )
 
     def submit_batch(
         self,
         reply_pairs: list[dict[str, Any]],
         place_seq: str,
         booking_id: str,
-        log: LogCallback | None = None
+        log: LogCallback | None = None,
     ) -> list[SubmissionResult]:
         """Submits multiple replies in a batch."""
 
@@ -81,13 +84,18 @@ class ReplySubmitter:
         # The csrf_token is sent as a cookie, which httpx.Client handles automatically.
         # We just need to ensure it was obtained during login.
         if "csrf_token" not in self.client.cookies:
-            emit("ERROR", "CSRF 토큰을 쿠키에서 찾을 수 없습니다. 로그인 과정이 올바른지 확인하세요.")
+            emit(
+                "ERROR",
+                "CSRF 토큰을 쿠키에서 찾을 수 없습니다. 로그인 과정이 올바른지 확인하세요.",
+            )
             for pair in reply_pairs:
-                results.append(SubmissionResult(
-                    review_id=pair.get("review_id", "unknown"),
-                    success=False,
-                    error="CSRF token not found in cookies."
-                ))
+                results.append(
+                    SubmissionResult(
+                        review_id=pair.get("review_id", "unknown"),
+                        success=False,
+                        error="CSRF token not found in cookies.",
+                    )
+                )
             return results
 
         for i, pair in enumerate(reply_pairs, 1):
@@ -95,12 +103,17 @@ class ReplySubmitter:
             reply_text = pair.get("reply_text", "")
 
             if not review_id or not reply_text.strip():
-                emit("WARNING", f"리뷰 '{review_id or 'N/A'}': 리뷰 ID 또는 답변 텍스트가 비어있어 건너뜁니다.")
-                results.append(SubmissionResult(
-                    review_id=review_id or f"unknown_{i}",
-                    success=False,
-                    error="Review ID or reply text is empty."
-                ))
+                emit(
+                    "WARNING",
+                    f"리뷰 '{review_id or 'N/A'}': 리뷰 ID 또는 답변 텍스트가 비어있어 건너뜁니다.",
+                )
+                results.append(
+                    SubmissionResult(
+                        review_id=review_id or f"unknown_{i}",
+                        success=False,
+                        error="Review ID or reply text is empty.",
+                    )
+                )
                 continue
 
             emit("INFO", f"[{i}/{len(reply_pairs)}] 리뷰 '{review_id}' 답변 제출 중...")
@@ -147,31 +160,30 @@ class ReplySubmitter:
                     raise httpx.HTTPError(f"GraphQL API Error: {error_detail}")
 
                 if response_data.get("data", {}).get("createReviewReply"):
-                    emit("SUCCESS", f"리뷰 '{review_id}' 답변이 성공적으로 제출되었습니다.")
-                    results.append(SubmissionResult(
-                        review_id=review_id,
-                        success=True,
-                        submitted_text=reply_text
-                    ))
+                    emit(
+                        "SUCCESS",
+                        f"리뷰 '{review_id}' 답변이 성공적으로 제출되었습니다.",
+                    )
+                    results.append(
+                        SubmissionResult(
+                            review_id=review_id, success=True, submitted_text=reply_text
+                        )
+                    )
                 else:
                     raise httpx.HTTPError("Unexpected GraphQL response format.")
 
             except (httpx.HTTPStatusError, httpx.RequestError, httpx.HTTPError) as e:
                 error_msg = f"API call failed: {e}"
                 emit("ERROR", f"리뷰 '{review_id}' 답변 제출 실패. {error_msg}")
-                results.append(SubmissionResult(
-                    review_id=review_id,
-                    success=False,
-                    error=str(e)
-                ))
+                results.append(
+                    SubmissionResult(review_id=review_id, success=False, error=str(e))
+                )
             except Exception as e:
                 error_msg = f"An unexpected error occurred: {e}"
                 emit("ERROR", f"리뷰 '{review_id}' 답변 제출 실패. {error_msg}")
-                results.append(SubmissionResult(
-                    review_id=review_id,
-                    success=False,
-                    error=str(e)
-                ))
+                results.append(
+                    SubmissionResult(review_id=review_id, success=False, error=str(e))
+                )
 
             # Add a short delay between requests to avoid rate-limiting
             if i < len(reply_pairs):

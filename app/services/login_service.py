@@ -66,7 +66,6 @@ class NaverLoginService:
 
         return client
 
-
     def login(
         self, user_id: str, password: str, force_credential_login: bool = False
     ) -> LoginResult:
@@ -148,8 +147,6 @@ class NaverLoginService:
         finally:
             client.close()
 
-
-
     def _ensure_smartplace_session(self, page) -> None:
         """Ensure SmartPlace domain cookies (e.g., csrf_token) are populated."""
         page.goto(SMARTPLACE_HOME_URL, wait_until="domcontentloaded")
@@ -174,7 +171,9 @@ class NaverLoginService:
                 if state_summary:
                     print("[DEBUG] SMARTPLACE state snapshot available")
             except Exception as snapshot_exc:
-                print(f"[DEBUG] Failed to capture SmartPlace state snapshot: {snapshot_exc}")
+                print(
+                    f"[DEBUG] Failed to capture SmartPlace state snapshot: {snapshot_exc}"
+                )
 
             # Method 1: Check for meta tag
             csrf_meta = page.query_selector('meta[name="csrf-token"]')
@@ -388,15 +387,19 @@ class NaverLoginService:
                 # Store the token for later use (could be stored in a class variable)
                 self._csrf_token = csrf_token
                 # Add the token to the browser context so it's saved with other cookies
-                page.context.add_cookies([
-                    {
-                        "name": "csrf_token",
-                        "value": csrf_token,
-                        "domain": ".naver.com",
-                        "path": "/",
-                    }
-                ])
-                print("[DEBUG] CSRF token injected into browser context for persistence.")
+                page.context.add_cookies(
+                    [
+                        {
+                            "name": "csrf_token",
+                            "value": csrf_token,
+                            "domain": ".naver.com",
+                            "path": "/",
+                        }
+                    ]
+                )
+                print(
+                    "[DEBUG] CSRF token injected into browser context for persistence."
+                )
             else:
                 print("[WARNING] CSRF token not found on SmartPlace page")
                 self._csrf_token = None
@@ -435,13 +438,17 @@ class NaverLoginService:
             if isinstance(warmup_result, dict):
                 text = warmup_result.get("text") or ""
                 snippet = text[:200]
-                print(f"[DEBUG] Warm-up request status: {warmup_result.get('ok')} body snippet: {snippet}")
+                print(
+                    f"[DEBUG] Warm-up request status: {warmup_result.get('ok')} body snippet: {snippet}"
+                )
                 if text:
                     try:
                         payload = json.loads(text)
                         token_from_body = None
                         if isinstance(payload, dict):
-                            token_from_body = payload.get("csrfToken") or payload.get("token")
+                            token_from_body = payload.get("csrfToken") or payload.get(
+                                "token"
+                            )
                             if not token_from_body:
                                 for value in payload.values():
                                     if isinstance(value, dict):

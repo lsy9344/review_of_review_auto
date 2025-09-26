@@ -1,6 +1,7 @@
 """
 A service to enumerate stores and resolve their various IDs.
 """
+
 from __future__ import annotations
 
 import logging
@@ -58,10 +59,14 @@ class StoreEnumerator:
                 f"플레이스 목록 API 요청 실패: 상태 코드 {e.response.status_code}"
             ) from e
         except Exception as e:
-            raise StoreEnumerationError(f"플레이스 목록 조회 중 알 수 없는 오류: {e}") from e
+            raise StoreEnumerationError(
+                f"플레이스 목록 조회 중 알 수 없는 오류: {e}"
+            ) from e
 
         if not isinstance(data, list):
-            raise StoreEnumerationError(f"API 응답이 예상된 리스트 형태가 아닙니다. 응답: {data}")
+            raise StoreEnumerationError(
+                f"API 응답이 예상된 리스트 형태가 아닙니다. 응답: {data}"
+            )
 
         for business_group in data:
             booking_businesses = business_group.get("bookingBusinesses", [])

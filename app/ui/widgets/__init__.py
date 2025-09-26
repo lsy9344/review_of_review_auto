@@ -8,4 +8,10 @@ from .control_widget import ControlWidget
 from .business_list_widget import BusinessListWidget
 from .results_window import ResultsWindow
 
-__all__ = ['LoginWidget', 'ConfigWidget', 'ControlWidget', 'BusinessListWidget', 'ResultsWindow']
+__all__ = [
+    "LoginWidget",
+    "ConfigWidget",
+    "ControlWidget",
+    "BusinessListWidget",
+    "ResultsWindow",
+]
