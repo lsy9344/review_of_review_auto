@@ -127,6 +127,9 @@ class ReplySubmitter:
                         "bookingBusinessId": int(booking_id),
                     }
                 }
+                # Add placeId if it exists in the pair (for receipt reviews, etc.)
+                if pair.get("place_id"):
+                    variables["input"]["placeId"] = pair["place_id"]
                 payload = {
                     "operationName": "createReply",
                     "variables": variables,

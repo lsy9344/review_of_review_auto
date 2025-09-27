@@ -54,10 +54,16 @@ class ReplyGenerator:
         except Exception as e:
             raise RuntimeError(f"OpenAI 클라이언트 초기화 실패: {e}")
 
-    def generate(self, review_text: str, review_author: str | None = None) -> str:
+    def generate(
+        self, review_text: str, review_author: str | None = None, log: LogCallback | None = None
+    ) -> str:
         """단일 리뷰에 대한 답변을 생성합니다."""
         if not review_text.strip():
             return ""
+
+        def emit(level: str, message: str) -> None:
+            if log:
+                log(level, message)
 
         try:
             # 사용자 정의 프롬프트가 있으면 사용, 없으면 기본 프롬프트 시스템 사용
@@ -74,6 +80,12 @@ class ReplyGenerator:
                     business_type=self.config.business_type,
                     store_name=self.config.store_name,
                 )
+
+            # 최종 프롬프트 디버그 로그
+            emit(
+                "DEBUG",
+                f"Final prompt for review by '{review_author}':\n{prompt}",
+            )
 
             raw_reply = self.llm_client.generate(
                 prompt=prompt,
@@ -119,7 +131,7 @@ class ReplyGenerator:
                     )
                     continue
 
-                generated_reply = self.generate(review_text, review_author)
+                generated_reply = self.generate(review_text, review_author, log=emit)
 
                 if not generated_reply:
                     emit("WARNING", f"리뷰 '{review_id}': 답변 생성 실패")

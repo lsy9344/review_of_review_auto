@@ -205,12 +205,22 @@ class _OrchestrationWorker(QObject):
                 if not hasattr(store, "generated_replies") or store.error:
                     continue
 
+                # Create a lookup map for review_id -> place_id
+                review_id_to_place_id = {
+                    review['id']: review.get('placeDetail', {}).get('id')
+                    for review in store.reviews
+                }
+
                 # 제출할 답변이 있는 경우만 처리
-                valid_replies = [
-                    {"review_id": reply.review_id, "reply_text": reply.generated_reply}
-                    for reply in store.generated_replies
-                    if reply.generated_reply and not reply.error
-                ]
+                valid_replies = []
+                for reply in store.generated_replies:
+                    if reply.generated_reply and not reply.error:
+                        specific_place_id = review_id_to_place_id.get(reply.review_id)
+                        valid_replies.append({
+                            "review_id": reply.review_id,
+                            "reply_text": reply.generated_reply,
+                            "place_id": specific_place_id,  # Add the specific place_id
+                        })
 
                 if not valid_replies:
                     continue

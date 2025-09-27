@@ -263,7 +263,7 @@ class ReviewCrawler:
         start_date = today - datetime.timedelta(days=365 * 2)  # 2년 전
         variables = {
             "input": {
-                "size": 5,  # 한 번에 최대 n개 요청
+                "size": 10,  # 한 번에 최대 n개 요청
                 "startDate": start_date.strftime("%Y-%m-%d"),
                 "endDate": today.strftime("%Y-%m-%d"),
                 "isSuspended": False,
